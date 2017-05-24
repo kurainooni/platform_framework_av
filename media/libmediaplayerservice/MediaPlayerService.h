@@ -343,7 +343,7 @@ private:
                                                    status_t status);
 
         player_type             getPlayerType(int fd, int64_t offset, int64_t length);
-        player_type             getPlayerType(const char* url);
+        player_type             getPlayerType(const char* url, KeyedVector<String8, String8> *headers = NULL);
         player_type             getPlayerType(const sp<IStreamSource> &source);
 
         static  void            notify(void* cookie, int msg,

@@ -73,7 +73,11 @@ class FastMixer;
 // Search also for "2", "left", "right", "[0]", "[1]", ">> 16", "<< 16", etc.
 #define FCC_2 2     // FCC_2 = Fixed Channel Count 2
 
+#ifdef TARGET_RK2928
+static const nsecs_t kDefaultStandbyTimeInNsecs = seconds(0);
+#else	
 static const nsecs_t kDefaultStandbyTimeInNsecs = seconds(3);
+#endif 
 
 class AudioFlinger :
     public BinderService<AudioFlinger>,

@@ -2228,6 +2228,11 @@ void AwesomePlayer::onPrepareAsyncEvent() {
     }
 }
 
+int64_t AwesomePlayer::onDisplayEvent()
+{
+	
+		return 8000ll;
+}
 void AwesomePlayer::finishAsyncPrepare_l() {
     if (mIsAsyncPrepare) {
         if (mVideoSource == NULL) {

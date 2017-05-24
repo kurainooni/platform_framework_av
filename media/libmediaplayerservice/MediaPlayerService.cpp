@@ -63,6 +63,7 @@
 #include "MetadataRetrieverClient.h"
 
 #include "MidiFile.h"
+#include "ApePlayer.h"
 #include "TestPlayerStub.h"
 #include "StagefrightPlayer.h"
 #include "nuplayer/NuPlayerDriver.h"
@@ -208,6 +209,7 @@ extmap FILE_EXTS [] =  {
         {".rtttl", SONIVOX_PLAYER},
         {".rtx", SONIVOX_PLAYER},
         {".ota", SONIVOX_PLAYER},
+		{".ape", APE_PLAYER},
 };
 
 // TODO: Find real cause of Audio/Video delay in PV framework and remove this workaround
@@ -562,11 +564,29 @@ player_type getPlayerType(int fd, int64_t offset, int64_t length)
     read(fd, buf, sizeof(buf));
     lseek(fd, offset, SEEK_SET);
 
-    long ident = *((long*)buf);
+	if(!memcmp("ID3", buf, 3))
+	{
+		size_t len =
+                ((buf[6] & 0x7f) << 21)
+                | ((buf[7] & 0x7f) << 14)
+                | ((buf[8] & 0x7f) << 7)
+                | (buf[9] & 0x7f);
 
+        len += 10;
+		lseek(fd, offset+len, SEEK_SET);
+		read(fd, buf, sizeof(buf));
+		lseek(fd, offset, SEEK_SET);
+	}
+
+
+    long ident = *((long*)buf);
+	
     // Ogg vorbis?
     if (ident == 0x5367674f) // 'OggS'
         return STAGEFRIGHT_PLAYER;
+	 // Ape
+    if (ident == 0x2043414D)
+        return APE_PLAYER;
 
     // Some kind of MIDI?
     EAS_DATA_HANDLE easdata;
@@ -629,6 +649,32 @@ player_type getPlayerType(const char* url)
     return getDefaultPlayerType();
 }
 
+extern player_type UrlCheckPlayerType(const char* url,KeyedVector<String8, String8> *headers);
+
+player_type getPlayerType(const char* url, KeyedVector<String8, String8> *headers )
+{
+    if (TestPlayerStub::canBeUsed(url)) {
+        return TEST_PLAYER;
+    }
+
+    if (!strncasecmp("aahRX://", url, 8)) {
+        return AAH_RX_PLAYER;
+    }
+
+    // use MidiFile for MIDI extensions
+    int lenURL = strlen(url);
+    for (int i = 0; i < NELEM(FILE_EXTS); ++i) {
+        int len = strlen(FILE_EXTS[i].extension);
+        int start = lenURL - len;
+        if (start > 0) {
+            if (!strncasecmp(url + start, FILE_EXTS[i].extension, len)) {
+                return FILE_EXTS[i].playertype;
+            }
+        }
+    }
+	return UrlCheckPlayerType(url,headers);    
+}
+
 player_type MediaPlayerService::Client::getPlayerType(int fd,
                                                       int64_t offset,
                                                       int64_t length)
@@ -643,7 +689,7 @@ player_type MediaPlayerService::Client::getPlayerType(int fd,
     return android::getPlayerType(fd, offset, length);
 }
 
-player_type MediaPlayerService::Client::getPlayerType(const char* url)
+player_type MediaPlayerService::Client::getPlayerType(const char* url, KeyedVector<String8, String8> *headers )
 {
     // Until re-transmit functionality is added to the existing core android
     // players, we use the special AAH TX player whenever we were configured
@@ -652,7 +698,7 @@ player_type MediaPlayerService::Client::getPlayerType(const char* url)
         return AAH_TX_PLAYER;
     }
 
-    return android::getPlayerType(url);
+    return android::getPlayerType(url,headers);
 }
 
 player_type MediaPlayerService::Client::getPlayerType(
@@ -675,6 +721,10 @@ static sp<MediaPlayerBase> createPlayer(player_type playerType, void* cookie,
         case SONIVOX_PLAYER:
             ALOGV(" create MidiFile");
             p = new MidiFile();
+            break;
+		case APE_PLAYER:
+            ALOGV(" create ApePlayer");
+            p = new ApePlayer();
             break;
         case STAGEFRIGHT_PLAYER:
             ALOGV(" create StagefrightPlayer");
@@ -805,7 +855,7 @@ status_t MediaPlayerService::Client::setDataSource(
         close(fd);
         return mStatus;
     } else {
-        player_type playerType = getPlayerType(url);
+        player_type playerType = getPlayerType(url,(KeyedVector<String8, String8> *)headers);
         sp<MediaPlayerBase> p = setDataSource_pre(playerType);
         if (p == NULL) {
             return NO_INIT;
@@ -1298,7 +1348,7 @@ int Antagonizer::callbackThread(void* user)
 }
 #endif
 
-static size_t kDefaultHeapSize = 1024 * 1024; // 1MB
+static size_t kDefaultHeapSize = 1024 * 1024 * 2; // 1MB
 
 sp<IMemory> MediaPlayerService::decode(const char* url, uint32_t *pSampleRate, int* pNumChannels, audio_format_t* pFormat)
 {

@@ -16,7 +16,8 @@ LOCAL_SRC_FILES:=               \
     MidiMetadataRetriever.cpp   \
     MidiFile.cpp                \
     StagefrightPlayer.cpp       \
-    StagefrightRecorder.cpp
+    StagefrightRecorder.cpp			\
+    ApePlayer.cpp 							\
 
 LOCAL_SHARED_LIBRARIES :=     		\
 	libcutils             			\
@@ -32,13 +33,16 @@ LOCAL_SHARED_LIBRARIES :=     		\
 	libstagefright_foundation       \
 	libgui                          \
 	libdl                           \
-	libaah_rtp
+	libaah_rtp     \
+	libapedec			\
+	libhtml5_check
 
 LOCAL_STATIC_LIBRARIES := \
         libstagefright_nuplayer                 \
         libstagefright_rtsp                     \
 
 LOCAL_C_INCLUDES :=                                               \
+	external/mac  \
 	$(call include-path-for, graphics corecg)                       \
 	$(TOP)/frameworks/av/media/libstagefright/include               \
 	$(TOP)/frameworks/av/media/libstagefright/rtsp                  \

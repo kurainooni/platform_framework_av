@@ -125,6 +125,12 @@ status_t AnotherPacketSource::read(
     return mEOSResult;
 }
 
+int64_t AnotherPacketSource::getCurrentPackTime()
+{
+    int64_t timeUs = 0;
+   
+    return timeUs;
+}
 bool AnotherPacketSource::wasFormatChange(
         int32_t discontinuityType) const {
     if (mIsAudio) {
@@ -150,6 +156,9 @@ void AnotherPacketSource::queueAccessUnit(const sp<ABuffer> &buffer) {
     mCondition.signal();
 }
 
+void AnotherPacketSource::queueAccessUnit(MediaBuffer *buffer) {
+    
+}
 void AnotherPacketSource::queueDiscontinuity(
         ATSParser::DiscontinuityType type,
         const sp<AMessage> &extra) {
@@ -179,6 +188,14 @@ void AnotherPacketSource::queueDiscontinuity(
     mBuffers.push_back(buffer);
     mCondition.signal();
 }
+void AnotherPacketSource::clear() {
+   
+}
+
+void AnotherPacketSource::setLastTime(uint64_t timeus)
+{
+   
+}
 
 void AnotherPacketSource::signalEOS(status_t result) {
     CHECK(result != OK);
@@ -196,6 +213,13 @@ bool AnotherPacketSource::hasBufferAvailable(status_t *finalResult) {
 
     *finalResult = mEOSResult;
     return false;
+}
+uint32_t AnotherPacketSource::numBufferAvailable(int32_t *mUseMem) {
+    Mutex::Autolock autoLock(mLock);
+	if(mUseMem != NULL){
+        *mUseMem = quen_memUsed;
+    }
+    return quen_num;
 }
 
 int64_t AnotherPacketSource::getBufferedDurationUs(status_t *finalResult) {

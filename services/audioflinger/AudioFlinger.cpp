@@ -3369,8 +3369,8 @@ The parameters that affect these derived values are:
 void AudioFlinger::PlaybackThread::cacheParameters_l()
 {
     mixBufferSize = mNormalFrameCount * mFrameSize;
-    activeSleepTime = activeSleepTimeUs();
-    idleSleepTime = idleSleepTimeUs();
+    activeSleepTime = activeSleepTimeUs()/4;
+    idleSleepTime = idleSleepTimeUs()/4;
 }
 
 void AudioFlinger::MixerThread::invalidateTracks(audio_stream_type_t streamType)
@@ -5982,11 +5982,11 @@ bool AudioFlinger::RecordThread::threadLoop()
     AudioBufferProvider::Buffer buffer;
     sp<RecordTrack> activeTrack;
     Vector< sp<EffectChain> > effectChains;
-
+	
     nsecs_t lastWarning = 0;
 
     acquireWakeLock();
-
+	short tmpBuf[512];
     // start recording
     while (!exitPending()) {
 
@@ -6165,7 +6165,8 @@ bool AudioFlinger::RecordThread::threadLoop()
                 // Release the processor for a while before asking for a new buffer.
                 // This will give the application more chance to read from the buffer and
                 // clear the overflow.
-                usleep(kRecordThreadSleepUs);
+               mInput->stream->read(mInput->stream, tmpBuf, 1024); 
+               // usleep(kRecordThreadSleepUs);
             }
         }
         // enable changes in effect chain

@@ -155,6 +155,15 @@ private:
 
     List<sp<AMessage> > mDeferredQueue;
 
+    Vector<int64_t> mTimeStamp;
+    bool mFirstFrameFlag;
+    int64_t mLastTime;
+    int32_t mDealtTime;
+    bool    mDealtFlag;
+    int64_t mDealtTimeToTal;
+    int32_t mNumFrame;
+    int32_t mNumSameFrame;
+	Mutex		mLock;
     bool mSentFormat;
     bool mIsEncoder;
 

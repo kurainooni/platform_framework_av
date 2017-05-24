@@ -54,7 +54,9 @@ public:
 
     // Convenience methods:
     bool getUInt16(off64_t offset, uint16_t *x);
-
+    virtual void updatecache(off64_t offset){
+        return;
+    }
     // May return ERROR_UNSUPPORTED.
     virtual status_t getSize(off64_t *size);
 

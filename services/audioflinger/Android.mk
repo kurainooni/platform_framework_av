@@ -84,6 +84,10 @@ LOCAL_SRC_FILES += FastMixer.cpp FastMixerState.cpp
 
 LOCAL_CFLAGS += -DFAST_MIXER_STATISTICS
 
+ifeq ($(strip $(TARGET_BOARD_HARDWARE)), rk2928board)
+  LOCAL_CFLAGS += -DTARGET_RK2928
+endif
+
 # uncomment to display CPU load adjusted for CPU frequency
 # LOCAL_CFLAGS += -DCPU_FREQUENCY_STATISTICS
 

@@ -36,6 +36,7 @@ NuPlayer::Decoder::Decoder(
         const sp<AMessage> &notify,
         const sp<NativeWindowWrapper> &nativeWindow)
     : mNotify(notify),
+      mInitFlag(false),
       mNativeWindow(nativeWindow) {
 }
 
@@ -85,6 +86,9 @@ void NuPlayer::Decoder::onMessageReceived(const sp<AMessage> &msg) {
             CHECK(msg->findInt32("what", &what));
 
             if (what == ACodec::kWhatFillThisBuffer) {
+	        if(!mInitFlag){
+		        mInitFlag = true;
+		    }
                 onFillThisBuffer(msg);
             } else {
                 sp<AMessage> notify = mNotify->dup();
@@ -149,7 +153,9 @@ void NuPlayer::Decoder::signalFlush() {
         mCodec->signalFlush();
     }
 }
-
+int32_t NuPlayer::Decoder::checkinit(){
+    return mInitFlag;
+}
 void NuPlayer::Decoder::signalResume() {
     if (mCodec != NULL) {
         mCodec->signalResume();

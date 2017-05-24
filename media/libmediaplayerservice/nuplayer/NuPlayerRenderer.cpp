@@ -78,11 +78,15 @@ void NuPlayer::Renderer::flush(bool audio) {
     {
         Mutex::Autolock autoLock(mFlushLock);
         if (audio) {
-            CHECK(!mFlushingAudio);
+            if(!mFlushingAudio)
             mFlushingAudio = true;
+            else
+                return;
         } else {
-            CHECK(!mFlushingVideo);
+            if(!mFlushingVideo)
             mFlushingVideo = true;
+            else
+                return;
         }
     }
 
@@ -92,8 +96,12 @@ void NuPlayer::Renderer::flush(bool audio) {
 }
 
 void NuPlayer::Renderer::signalTimeDiscontinuity() {
-    CHECK(mAudioQueue.empty());
-    CHECK(mVideoQueue.empty());
+    if(!mAudioQueue.empty()){
+        mAudioQueue.clear();
+    }
+    if(!mVideoQueue.empty()){
+        mVideoQueue.clear();
+    }
     mAnchorTimeMediaUs = -1;
     mAnchorTimeRealUs = -1;
     mSyncQueues = mHasAudio && mHasVideo;
@@ -341,6 +349,9 @@ void NuPlayer::Renderer::postDrainVideoQueue() {
         }
     }
 
+   if(delayUs > 80000){
+	delayUs = 35000;
+    }
     msg->post(delayUs);
 
     mDrainVideoQueuePending = true;
@@ -374,7 +385,10 @@ void NuPlayer::Renderer::onDrainVideoQueue() {
     mVideoLateByUs = ALooper::GetNowUs() - realTimeUs;
 
     bool tooLate = (mVideoLateByUs > 40000);
-
+    if(mVideoLateByUs < -50000){
+	    ALOGV("video is early");
+	    return;
+    }
     if (tooLate) {
         ALOGV("video late by %lld us (%.2f secs)",
              mVideoLateByUs, mVideoLateByUs / 1E6);
@@ -620,8 +634,10 @@ void NuPlayer::Renderer::notifyPosition() {
 }
 
 void NuPlayer::Renderer::onPause() {
-    CHECK(!mPaused);
-
+    if(mPaused)
+    {
+        return;
+    }
     mDrainAudioQueuePending = false;
     ++mAudioQueueGeneration;
 

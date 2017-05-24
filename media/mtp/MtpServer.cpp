@@ -315,6 +315,7 @@ bool MtpServer::handleRequest() {
     if (mSendObjectHandle != kInvalidObjectHandle && operation != MTP_OPERATION_SEND_OBJECT) {
         // FIXME - need to delete mSendObjectHandle from the database
         ALOGE("expected SendObject after SendObjectInfo");
+        deleteBadObject(mSendObjectHandle);
         mSendObjectHandle = kInvalidObjectHandle;
     }
 
@@ -883,7 +884,12 @@ MtpResponseCode MtpServer::doSendObjectInfo() {
             format, parent, storageID, mSendObjectFileSize, modifiedTime);
     if (handle == kInvalidObjectHandle) {
         return MTP_RESPONSE_GENERAL_ERROR;
+    } else if (handle > 0x7FFFFFFF) {
+	    deleteBadObject(-1 * (int)handle);		
+        handle = mDatabase->beginSendObject((const char*)path,
+            format, parent, storageID, mSendObjectFileSize, modifiedTime);
     }
+	ALOGV("path: %s parent: %d storageID: %08X handle: %d", (const char*)path, parent, storageID, handle);
 
   if (format == MTP_FORMAT_ASSOCIATION) {
         mode_t mask = umask(0);
@@ -1061,6 +1067,28 @@ MtpResponseCode MtpServer::doDeleteObject() {
     }
 
     return result;
+}
+
+bool MtpServer::deleteBadObject(MtpObjectHandle handle) {
+	if (!hasStorage())
+        return false;
+
+	MtpObjectFormat format = 0;
+    MtpString filePath;
+    int64_t fileLength;
+    int result = mDatabase->getObjectFilePath(handle, filePath, fileLength, format);
+    if (result == MTP_RESPONSE_OK) {
+        ALOGD("deleteBadObject: deleting %s", (const char *)filePath);
+        result = mDatabase->deleteFile(handle);
+        // Don't delete the actual files unless the database deletion is allowed
+        if (result == MTP_RESPONSE_OK) {
+            deletePath((const char *)filePath);
+        }
+    }
+
+	if (result == MTP_RESPONSE_OK)
+    	return true;
+	return false;
 }
 
 MtpResponseCode MtpServer::doGetObjectPropDesc() {

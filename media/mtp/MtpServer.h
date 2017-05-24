@@ -147,6 +147,7 @@ private:
     MtpResponseCode     doTruncateObject();
     MtpResponseCode     doBeginEditObject();
     MtpResponseCode     doEndEditObject();
+    bool                deleteBadObject(MtpObjectHandle handle);
 };
 
 }; // namespace android

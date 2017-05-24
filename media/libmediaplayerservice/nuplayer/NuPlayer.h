@@ -102,7 +102,8 @@ private:
 
     bool mScanSourcesPending;
     int32_t mScanSourcesGeneration;
-
+	bool isUrl;
+	bool isBuffering;
     enum FlushStatus {
         NONE,
         AWAITING_DISCONTINUITY,
@@ -125,6 +126,8 @@ private:
     int64_t mSkipRenderingAudioUntilMediaTimeUs;
     int64_t mSkipRenderingVideoUntilMediaTimeUs;
 
+    int64_t mLastSeekTimeUs;
+    int64_t mLastSeekSysTimeUs;
     int64_t mVideoLateByUs;
     int64_t mNumFramesTotal, mNumFramesDropped;
 
@@ -143,7 +146,11 @@ private:
 
     void finishReset();
     void postScanSources();
-
+    bool mSeeking;
+    bool mPauseFlag;
+    bool mAudioFlag;
+    bool mVideoFlag;
+    int32_t restTimeOut;
     DISALLOW_EVIL_CONSTRUCTORS(NuPlayer);
 };
 

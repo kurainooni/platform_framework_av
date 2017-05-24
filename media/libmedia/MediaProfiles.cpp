@@ -610,7 +610,44 @@ void MediaProfiles::checkAndAddRequiredProfilesIfNecessary() {
         }
     }
 }
+//ddl ,multiple camera
+static int CameraGroupFound()
+{
+    int media_profiles_id=0,i,len;
+    char camera_link[30];
+    char camera_name[50];
 
+    for (i=0; i<2; i++) {
+        sprintf(camera_link,"/sys/dev/char/81:%d/device",i);
+        memset(camera_name,0x00,sizeof(camera_name));
+        len = readlink(camera_link,camera_name, sizeof(camera_name));
+        if (len > 0) {
+            if (strstr(camera_name,"front")) {
+                if (strstr(camera_name,"front_2")) {
+                    media_profiles_id |= 0x02;
+                } else if (strstr(camera_name,"front_3")) {
+                    media_profiles_id |= 0x03;
+                } else if (strstr(camera_name,"front_1")) {
+                    media_profiles_id |= 0x01;
+                } else {
+                    media_profiles_id &= 0xffffff00;
+                }
+            } else if (strstr(camera_name,"back")) {
+                if (strstr(camera_name,"back_2")) {
+                    media_profiles_id |= 0x0200;
+                } else if (strstr(camera_name,"back_2")) {
+                    media_profiles_id |= 0x0300;
+                } else if (strstr(camera_name,"back_1")) {
+                    media_profiles_id |= 0x0100;
+                } else {
+                    media_profiles_id &= 0xffff00ff;
+                }
+            }
+        }
+    }
+    ALOGD("%s(%d): media_profiles_id: 0x%x",__FUNCTION__,__LINE__,media_profiles_id);
+    return media_profiles_id;
+}
 /*static*/ MediaProfiles*
 MediaProfiles::getInstance()
 {
@@ -619,13 +656,35 @@ MediaProfiles::getInstance()
     if (!sIsInitialized) {
         char value[PROPERTY_VALUE_MAX];
         if (property_get("media.settings.xml", value, NULL) <= 0) {
-            const char *defaultXmlFile = "/etc/media_profiles.xml";
-            FILE *fp = fopen(defaultXmlFile, "r");
+            char defaultXmlFile[30];  
+            FILE *fp;
+            int media_profiles_id;
+            
+            //ddl ,multiple camera
+            media_profiles_id = CameraGroupFound();
+            if (media_profiles_id == 0x00) {
+                defaultXmlFile[0] = 0x00;
+                strcat(defaultXmlFile,"/etc/media_profiles.xml");
+            } else {
+                sprintf(defaultXmlFile,"/etc/media_profiles%d%d.xml",
+                    (media_profiles_id&0xff00)>>8,media_profiles_id&0xff);
+            }
+           
+            fp = fopen(defaultXmlFile, "r");
+            if (fp == NULL) {
+                ALOGE("%s(%d): media_profiles_id is 0x%x, but %s file is not exist",
+                    __FUNCTION__,__LINE__,media_profiles_id, defaultXmlFile);
+                memset(defaultXmlFile,0x00,sizeof(defaultXmlFile));
+                strcat(defaultXmlFile,"/etc/media_profiles.xml");
+                fp = fopen(defaultXmlFile, "r");
+            }
+            
             if (fp == NULL) {
                 ALOGW("could not find media config xml file");
                 sInstance = createDefaultInstance();
             } else {
                 fclose(fp);  // close the file first.
+                ALOGD("%s(%d): Create instance from %s ",__FUNCTION__,__LINE__,defaultXmlFile);
                 sInstance = createInstanceFromXmlFile(defaultXmlFile);
             }
         } else {

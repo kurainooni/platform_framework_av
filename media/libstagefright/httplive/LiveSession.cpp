@@ -56,6 +56,7 @@ LiveSession::LiveSession(uint32_t flags, bool uidValid, uid_t uid)
       mSeekTimeUs(-1),
       mNumRetries(0),
       mDurationUs(-1),
+      mCurrenttimeUs(0),
       mSeekDone(false),
       mDisconnectPending(false),
       mMonitorQueueGeneration(0),
@@ -934,6 +935,11 @@ status_t LiveSession::getDuration(int64_t *durationUs) {
     return OK;
 }
 
+status_t LiveSession::getCurrentTime(int64_t *CurrenttimeUs) {
+    Mutex::Autolock autoLock(mLock);
+    *CurrenttimeUs = mCurrenttimeUs;
+    return OK;
+}
 bool LiveSession::isSeekable() {
     int64_t durationUs;
     return getDuration(&durationUs) == OK && durationUs >= 0;

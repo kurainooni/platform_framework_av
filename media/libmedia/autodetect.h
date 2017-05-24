@@ -26,10 +26,21 @@ enum {
     kEncodingGBK                = (1 << 1),
     kEncodingBig5               = (1 << 2),
     kEncodingEUCKR              = (1 << 3),
-
-    kEncodingAll                = (kEncodingShiftJIS | kEncodingGBK | kEncodingBig5 | kEncodingEUCKR),
+    kEncodingUTF8               = (1<<4),
+	kEncodingWin1251           = (1<<5),
+    kEncodingAll                = (kEncodingShiftJIS | kEncodingGBK | kEncodingBig5 | kEncodingEUCKR|kEncodingUTF8),
 };
 
+typedef struct win1251tounicode {
+    unsigned char win1251;
+    unsigned short unicode;
+    }win1251tounicode;
+#define MEM_FAIL -1
+#define NO_MEM -2
+#define MEM_NOT_ENOUGH  -3
+//pin :1251 character
+
+extern int Win1251ToUtf8(unsigned char *pin,int inlen,unsigned char *pout,int outlen);
 
 // returns a bitfield containing the possible native encodings for the given character
 extern uint32_t findPossibleEncodings(int ch);

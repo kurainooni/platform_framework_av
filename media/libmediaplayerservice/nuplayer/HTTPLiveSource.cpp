@@ -43,6 +43,7 @@ NuPlayer::HTTPLiveSource::HTTPLiveSource(
       mFlags(0),
       mFinalResult(OK),
       mOffset(0) {
+      mLiveSession = NULL;
     if (headers) {
         mExtraHeaders = *headers;
 
@@ -122,11 +123,21 @@ status_t NuPlayer::HTTPLiveSource::feedMoreTSData() {
             if (buffer[0] == 0x00) {
                 // XXX legacy
                 sp<AMessage> extra;
+                int64_t mCurrentTime = 0;
+                extra= new AMessage();
+                mLiveSession->getCurrentTime(&mCurrentTime);
+                extra->setInt64("start-at-mediatimeUs", mCurrentTime);
+                if(buffer[1] == 2){
                 mTSParser->signalDiscontinuity(
+                        ATSParser::DISCONTINUITY_PLUSTIME,
+                        extra);
+                }else{
+                    mTSParser->signalDiscontinuity(
                         buffer[1] == 0x00
                             ? ATSParser::DISCONTINUITY_SEEK
                             : ATSParser::DISCONTINUITY_FORMATCHANGE,
                         extra);
+                }
             } else {
                 status_t err = mTSParser->feedTSPacket(buffer, sizeof(buffer));
 
@@ -185,5 +196,15 @@ bool NuPlayer::HTTPLiveSource::isSeekable() {
     return mLiveSession->isSeekable();
 }
 
+void NuPlayer::HTTPLiveSource::reset() {
+    if(mLiveSession == NULL){
+        return;
+    }
+    sp<LiveDataSource> source =
+            static_cast<LiveDataSource *>(mLiveSession->getDataSource().get());
+    if (mLiveSession !=NULL) {
+        mLiveSession->disconnect();
+    }
+}
 }  // namespace android
 

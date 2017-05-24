@@ -134,6 +134,11 @@ MediaScanResult MediaScanner::doProcessDirectory(
     char* fileSpot = path + strlen(path);
     struct dirent* entry;
 
+    if(strstr(path,"/data/") || strstr(path,"/obb/")){
+        ALOGD("Skipping by dzy: %s", path);
+        return MEDIA_SCAN_RESULT_OK;
+    }
+
     if (shouldSkipDirectory(path)) {
         ALOGD("Skipping: %s", path);
         return MEDIA_SCAN_RESULT_OK;

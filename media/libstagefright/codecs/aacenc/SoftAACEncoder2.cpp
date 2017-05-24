@@ -69,7 +69,7 @@ void SoftAACEncoder2::initPorts() {
 
     def.nPortIndex = 0;
     def.eDir = OMX_DirInput;
-    def.nBufferCountMin = kNumBuffers;
+    def.nBufferCountMin = kNumBuffers*2;
     def.nBufferCountActual = def.nBufferCountMin;
     def.nBufferSize = kNumSamplesPerFrame * sizeof(int16_t) * 2;
     def.bEnabled = OMX_TRUE;
@@ -87,7 +87,7 @@ void SoftAACEncoder2::initPorts() {
 
     def.nPortIndex = 1;
     def.eDir = OMX_DirOutput;
-    def.nBufferCountMin = kNumBuffers;
+    def.nBufferCountMin = kNumBuffers*2;
     def.nBufferCountActual = def.nBufferCountMin;
     def.nBufferSize = 8192;
     def.bEnabled = OMX_TRUE;

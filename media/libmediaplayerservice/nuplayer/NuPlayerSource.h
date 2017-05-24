@@ -51,6 +51,9 @@ struct NuPlayer::Source : public RefBase {
         return false;
     }
 
+    virtual void reset() {
+        return;
+    }
 protected:
     virtual ~Source() {}
 
